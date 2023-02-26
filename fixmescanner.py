@@ -1,21 +1,25 @@
 
-import os, glob
-import argparse
+import os, glob, argparse, re
 
-parser = argparse.ArgumentParser(description='Scan for TODOs and FIXMEs')
-parser.add_argument('path', metavar='path', type=str, nargs='+', help='path to scan')
+parser = argparse.ArgumentParser(description='Scan for TODOs and FIXMEs and optionally other keywords.')
+parser.add_argument('--path', metavar='path', type=str, help='path to scan if not specified, the current directory is used')
+parser.add_argument('--keyword', metavar='keyword', type=str, nargs='+', help='keyword to scan for')
 
 args = parser.parse_args()
-path = args.path[0]
-print('path:', path)
-if path:
-    dir_path = os.path.dirname(path)
-else:
-    dir_path = os.path.dirname(os.path.realpath(__file__))
+path = args.path
+keywords = args.keyword or []
 
-for filename in glob.glob('*.py'):
-    print('filename: ', filename)
-    with open(os.path.join(os.getcwd(), filename)) as f:
+if path:
+    dir_path = os.path.abspath(path)
+else:
+    dir_path = os.getcwd()
+print('k', keywords)
+pattern = '|'.join(['todo', 'fixme'] + keywords)
+regex = re.compile(pattern, re.IGNORECASE)
+print('Scanning for: ', pattern)
+for filename in glob.glob(os.path.join(dir_path,'*.py')):
+    print('Filename: ', filename)
+    with open(filename) as f:
         for i, line in enumerate(f):
-            if any(keyword in line.lower() for keyword in ('todo', 'fixme')):
-                print('line: ',i, ' ', line)
+            if regex.search(line):
+                print('line: ',i+1, ' ', line)
